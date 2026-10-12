@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
 import './App.css';
+import { WorkflowBuilder } from './WorkflowBuilder';
 
 type Workflow = {
   id: number;
@@ -53,7 +53,7 @@ function App() {
       id: Date.now(),
       name,
       status: 'Draft',
-      steps: 0,
+      steps: 2, // Default steps from the canvas template
       updated: 'Just now',
     };
 
@@ -101,36 +101,42 @@ function App() {
               className="primary-button"
               onClick={() => setShowForm(!showForm)}
             >
-              + Create Workflow
+              {showForm ? 'Close Builder' : '+ Create Workflow'}
             </button>
           </div>
 
           {showForm && (
-            <form
-              className="create-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                createWorkflow();
-              }}
-            >
-              <label htmlFor="workflowName">Workflow name</label>
-              <input
-                id="workflowName"
-                value={workflowName}
-                onChange={(event) => setWorkflowName(event.target.value)}
-                placeholder="e.g. Order Processing"
-              />
-              <button className="primary-button" type="submit">
-                Save Workflow
-              </button>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => setShowForm(false)}
+            <div className="create-workflow-container" style={{ marginBottom: '24px' }}>
+              <form
+                className="create-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  createWorkflow();
+                }}
               >
-                Cancel
-              </button>
-            </form>
+                <label htmlFor="workflowName">Workflow name</label>
+                <input
+                  id="workflowName"
+                  value={workflowName}
+                  onChange={(event) => setWorkflowName(event.target.value)}
+                  placeholder="e.g. Order Processing"
+                  required
+                />
+                <button className="primary-button" type="submit">
+                  Save Workflow
+                </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+
+              {/* Your Interactive Node Canvas */}
+              <WorkflowBuilder />
+            </div>
           )}
 
           <div className="stats-grid">
