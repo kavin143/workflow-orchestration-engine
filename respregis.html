@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- The crucial viewport tag we discussed to enable mobile scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Form</title>
+  <style>
+    /* Reset & Core Styling */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f9;
+      color: #333;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .form-container {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 800px;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      text-align: center;
+      color: #1e293b;
+      margin-bottom: 30px;
+      font-size: 24px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 15px;
+    }
+
+    h2 {
+      font-size: 16px;
+      color: #2563eb;
+      margin: 25px 0 15px 0;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* Modern 2-Column Responsive Layout */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    /* Force full-width elements inside the grid layout */
+    .full-width {
+      grid-column: span 2;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #475569;
+    }
+
+    /* Custom styling for inputs */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      background-color: #f8fafc;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563eb;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Style Choice Clusters (Radios & Checkboxes) */
+    .options-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 8px 0;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .option-item input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* Standardized Date + Age row arrangement */
+    .dob-age-group {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 15px;
+    }
+
+    /* Style native browser file wrappers */
+    input[type="file"] {
+      padding: 5px 0;
+      font-size: 13px;
+    }
+
+    /* Custom Form Layout Execution Buttons */
+    .button-group {
+      margin-top: 35px;
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+    }
+
+    button[type="submit"] {
+      background-color: #2563eb;
+      color: #fff;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #1d4ed8;
+    }
+
+    button[type="reset"] {
+      background-color: #e2e8f0;
+      color: #475569;
+    }
+
+    button[type="reset"]:hover {
+      background-color: #cbd5e1;
+    }
+
+    /* Mobile Responsive Logic */
+    @media (max-width: 680px) {
+      .form-grid {
+        grid-template-columns: 1fr; /* Switch entire grid to 1 vertical stack */
+      }
+      .full-width {
+        grid-column: span 1;
+      }
+      .dob-age-group {
+        grid-template-columns: 1fr; /* Stack age field under date picker */
+      }
+      .button-group {
+        flex-direction: column-reverse; /* Stack buttons logically on mobile devices */
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <h1>Student Registration Form</h1>
+    
+    <form action="#" method="POST">
+      
+      <!-- Student Details Section -->
+      <h2>Student Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="first-name">First Name</label>
+          <input type="text" id="first-name" placeholder="Enter first name" required>
+        </div>
+        <div class="form-group">
+          <label for="last-name">Last Name</label>
+          <input type="text" id="last-name" placeholder="Enter last name" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email ID</label>
+          <input type="email" id="email" placeholder="abcdefgh@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label for="mobile">Mobile Number</label>
+          <input type="tel" id="mobile" placeholder="1234567890" required>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="options-group">
+            <label class="option-item"><input type="radio" name="gender" value="male"> Male</label>
+            <label class="option-item"><input type="radio" name="gender" value="female"> Female</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="dob-age-group">
+            <div>
+              <label for="dob">Date Of Birth (DOB)</label>
+              <input type="date" id="dob" required>
+            </div>
+            <div>
+              <label for="age">Age</label>
+              <input type="text" id="age" placeholder="Age">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent Details Section -->
+      <h2>Parent Details</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="father-name">Father Name</label>
+          <input type="text" id="father-name" placeholder="Enter father name">
+        </div>
+        <div class="form-group">
+          <label for="occupation">Occupation</label>
+          <input type="text" id="occupation" placeholder="Enter occupation">
+        </div>
+        <div class="form-group full-width">
+          <label for="address">Address</label>
+          <textarea id="address" placeholder="Please Enter your Address"></textarea>
+        </div>
+      </div>
+
+      <!-- Group Details Section -->
+      <h2>Group Details</h2>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Streams</label>
+          <div class="options-group">
+            <label class="option-item"><input type="radio" name="stream" value="mpc"> MPC</label>
+            <label class="option-item"><input type="radio" name="stream" value="bipc"> BIPC</label>
+            <label class="option-item"><input type="radio" name="stream" value="cec"> CEC</label>
+            <label class="option-item"><input type="radio" name="stream" value="mec"> MEC</label>
+            <label class="option-item"><input type="radio" name="stream" value="hec"> HEC</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="language">Second Language</label>
+          <select id="language">
+            <option value="" disabled selected>Select</option>
+            <option value="hindi">Hindi</option>
+            <option value="telugu">Telugu</option>
+            <option value="sanskrit">Sanskrit</option>
+            <option value="french">French</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label>Hobbies</label>
+          <div class="options-group">
+            <label class="option-item"><input type="checkbox" name="hobbies" value="drawing"> Drawing</label>
+            <label class="option-item"><input type="checkbox" name="hobbies" value="singing"> Singing</label>
+            <label class="option-item"><input type="checkbox" name="hobbies" value="dancing"> Dancing</label>
+            <label class="option-item"><input type="checkbox" name="hobbies" value="sketching"> Sketching</label>
+            <label class="option-item"><input type="checkbox" name="hobbies" value="others"> Others</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="ssc-memo">Upload SSC Memo</label>
+          <input type="file" id="ssc-memo">
+        </div>
+        <div class="form-group">
+          <label for="adhar-card">Upload Adhar card</label>
+          <input type="file" id="adhar-card">
+        </div>
+      </div>
+
+      <!-- Action Submissions -->
+      <div class="button-group">
+        <button type="reset">Reset</button>
+        <button type="submit">Submit</button>
+      </div>
+
+    </form>
+  </div>
+
+</body>
+</html>
