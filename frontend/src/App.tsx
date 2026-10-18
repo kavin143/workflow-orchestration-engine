@@ -1,13 +1,15 @@
+
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './features/auth/AuthContext'
+import AppRoutes from './routes/AppRoutes'
 import './App.css'
 
-function App() {
-  
-
+export default function App() {
   return (
-    <>
-      <h1>Zaalima Project 1 Devlopment</h1>
-    </>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
-
-export default App
