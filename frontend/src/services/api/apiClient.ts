@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1'
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1/'
 
 type ApiOptions = RequestInit & {
   token?: string | null
@@ -12,7 +12,9 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const { token, headers, ...requestOptions } = options
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const url = `${API_BASE_URL.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
+
+  const response = await fetch(url, {
     ...requestOptions,
     headers: {
       'Content-Type': 'application/json',
@@ -26,12 +28,12 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const message =
       typeof data === 'object' &&
-      data !== null &&
-      'error' in data &&
-      typeof data.error === 'object' &&
-      data.error !== null &&
-      'message' in data.error &&
-      typeof data.error.message === 'string'
+        data !== null &&
+        'error' in data &&
+        typeof data.error === 'object' &&
+        data.error !== null &&
+        'message' in data.error &&
+        typeof data.error.message === 'string'
         ? data.error.message
         : `Request failed with status ${response.status}`
 
