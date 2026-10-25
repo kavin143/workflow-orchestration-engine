@@ -298,3 +298,174 @@ font-size: 21px;
 font-size: 24px;
 }
 }
+/* =====================================
+   ZAALIMA REGISTER PAGE STYLES
+   ===================================== */
+   
+/* Zaalima Register Page */
+.register-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background:
+    radial-gradient(circle at 10% 15%, #c7d8ff 0, transparent 32%),
+    radial-gradient(circle at 90% 85%, #d9c8ff 0, transparent 35%),
+    linear-gradient(135deg, #eef2ff, #f8f7ff 50%, #e5edff);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 650px;
+  box-sizing: border-box;
+  padding: 38px 42px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(79, 70, 229, 0.14);
+}
+
+.register-card h1 {
+  margin: 0 0 14px;
+  background: linear-gradient(135deg, #3730a3, #6366f1, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  letter-spacing: -0.8px;
+}
+
+.register-card > p:first-of-type {
+  margin: 0 0 28px;
+  color: #66708e;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.register-card label {
+  display: block;
+  margin: 18px 0 8px;
+  color: #202a48;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.register-card input,
+.register-card select {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 1px solid #d9def0;
+  border-radius: 12px;
+  background: #fff;
+  color: #18213d;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.register-card input:focus,
+.register-card select:focus {
+  outline: none;
+  border-color: #6554f0;
+  box-shadow: 0 0 0 4px rgba(101, 84, 240, 0.12);
+}
+
+.register-card small {
+  display: block;
+  margin-top: 9px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f1f1ff;
+  color: #525d80;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.register-card .error {
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f2;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.register-card button[type="submit"] {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 24px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(100deg, #5265f5, #783cf6);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(98, 75, 235, 0.22);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.register-card button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(98, 75, 235, 0.3);
+}
+
+.register-card button[type="submit"]:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  transform: none;
+}
+
+.register-card > p:last-child {
+  margin: 22px 0 0;
+  color: #66708e;
+  font-size: 14px;
+  text-align: center;
+}
+
+.register-card a {
+  color: #5945e8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-card a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .register-page {
+    padding: 20px 12px;
+  }
+
+  .register-card {
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+
+  .register-card h1 {
+    font-size: 25px;
+  }
+}
+/* Register name fields in one row */
+.register-name-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .register-name-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

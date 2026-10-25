@@ -117,9 +117,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="page">
+    <main className="register-page">
       <form
-        className="panel login-panel"
+        className="register-card"
         onSubmit={handleSubmit}
       >
         <h1>Create your Zaalima workspace</h1>
@@ -141,7 +141,8 @@ export default function RegisterPage() {
           }
           required
         />
-
+<div className="register-name-row">
+  <div className="register-name-field">
         <label htmlFor="firstName">First name</label>
         <input
           id="firstName"
@@ -156,7 +157,8 @@ export default function RegisterPage() {
           }
           required
         />
-
+</div>
+<div className="register-name-field">
         <label htmlFor="lastName">Last name</label>
         <input
           id="lastName"
@@ -171,7 +173,8 @@ export default function RegisterPage() {
           }
           required
         />
-
+        </div>
+        </div>
         <label htmlFor="registerEmail">Email</label>
         <input
           id="registerEmail"
