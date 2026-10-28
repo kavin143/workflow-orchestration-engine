@@ -1,4 +1,3 @@
-
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiRequest } from '../services/api/apiClient'
@@ -83,13 +82,10 @@ export default function RegisterPage() {
         ...(form.dateOfBirth && { dateOfBirth: form.dateOfBirth }),
       }
 
-      const result = await apiRequest<RegisterResponse>(
-        '/auth/register',
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        },
-      )
+      const result = await apiRequest<RegisterResponse>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
 
       if (!result.success) {
         throw new Error(result.message || 'Registration failed.')
@@ -97,13 +93,11 @@ export default function RegisterPage() {
 
       setSuccess('Your workspace has been created successfully.')
 
-      // Registration does not issue an access token.
-      // Navigate to login after briefly showing success.
       navigate('/login', {
         replace: true,
         state: {
           registrationSuccess:
-            'Registration successful. You can now sign in when login is available.',
+            'Registration successful. You can now sign in.',
           registeredEmail: form.email.trim(),
         },
       })
@@ -117,11 +111,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="page">
-      <form
-        className="panel login-panel"
-        onSubmit={handleSubmit}
-      >
+    <main className="register-page">
+      <form className="register-card" onSubmit={handleSubmit}>
         <h1>Create your Zaalima workspace</h1>
         <p>
           Register your workspace and create your administrator account.
@@ -142,35 +133,41 @@ export default function RegisterPage() {
           required
         />
 
-        <label htmlFor="firstName">First name</label>
-        <input
-          id="firstName"
-          name="firstName"
-          type="text"
-          autoComplete="given-name"
-          minLength={2}
-          maxLength={50}
-          value={form.firstName}
-          onChange={(event) =>
-            updateField('firstName', event.target.value)
-          }
-          required
-        />
+        <div className="register-name-row">
+          <div className="register-name-field">
+            <label htmlFor="firstName">First name</label>
+            <input
+              id="firstName"
+              name="firstName"
+              type="text"
+              autoComplete="given-name"
+              minLength={2}
+              maxLength={50}
+              value={form.firstName}
+              onChange={(event) =>
+                updateField('firstName', event.target.value)
+              }
+              required
+            />
+          </div>
 
-        <label htmlFor="lastName">Last name</label>
-        <input
-          id="lastName"
-          name="lastName"
-          type="text"
-          autoComplete="family-name"
-          minLength={1}
-          maxLength={50}
-          value={form.lastName}
-          onChange={(event) =>
-            updateField('lastName', event.target.value)
-          }
-          required
-        />
+          <div className="register-name-field">
+            <label htmlFor="lastName">Last name</label>
+            <input
+              id="lastName"
+              name="lastName"
+              type="text"
+              autoComplete="family-name"
+              minLength={1}
+              maxLength={50}
+              value={form.lastName}
+              onChange={(event) =>
+                updateField('lastName', event.target.value)
+              }
+              required
+            />
+          </div>
+        </div>
 
         <label htmlFor="registerEmail">Email</label>
         <input
@@ -201,9 +198,10 @@ export default function RegisterPage() {
           aria-describedby="passwordHelp"
           required
         />
+
         <small id="passwordHelp">
-          At least 12 characters, including an uppercase letter,
-          a lowercase letter, and a number.
+          At least 12 characters, including an uppercase letter, a lowercase
+          letter, and a number.
         </small>
 
         <label htmlFor="gender">Gender (optional)</label>
@@ -211,9 +209,7 @@ export default function RegisterPage() {
           id="gender"
           name="gender"
           value={form.gender}
-          onChange={(event) =>
-            updateField('gender', event.target.value)
-          }
+          onChange={(event) => updateField('gender', event.target.value)}
         >
           <option value="">Prefer not to specify</option>
           <option value="MALE">Male</option>
@@ -240,11 +236,7 @@ export default function RegisterPage() {
           </p>
         )}
 
-        {success && (
-          <p role="status">
-            {success}
-          </p>
-        )}
+        {success && <p role="status">{success}</p>}
 
         <button type="submit" disabled={loading}>
           {loading ? 'Creating workspace...' : 'Create workspace'}
