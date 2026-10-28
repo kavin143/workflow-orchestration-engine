@@ -52,37 +52,90 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="page">
-      <form className="panel login-panel" onSubmit={handleSubmit}>
+  <main className="login-page">
+    <section className="login-card">
+      <div className="login-brand">
+        <div className="brand-icon">✦</div>
+
         <h1>Zaalima</h1>
-        <p>Sign in to your workflow workspace.</p>
+        <p className="brand-tagline">
+          Workflow orchestration made simple.
+        </p>
 
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          autoComplete="username"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
+        <div className="brand-divider" />
 
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
+        <h2>Welcome back!</h2>
+        <p className="brand-description">
+          Sign in to manage your workflows, monitor executions,
+          and keep your workspace organized.
+        </p>
 
-        {error && <p role="alert" className="error">{error}</p>}
+        <div className="brand-badge">
+          <span>✓</span>
+          Secure workspace access
+        </div>
+      </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in'}
-        </button>
-      </form>
-    </main>
+      <div className="login-content">
+        <div className="login-heading">
+          <span className="eyebrow">WELCOME BACK</span>
+          <h2>Sign in to Zaalima</h2>
+          <p>Enter your account details to continue.</p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-field">
+            <label htmlFor="email">Email address</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="username"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </div>
+
+          {error && (
+            <p role="alert" className="login-error">
+              {error}
+            </p>
+          )}
+
+          <button
+            className="login-submit"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign in'}
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <p className="login-footer">
+          Don't have an account?{' '}
+          <a href="/register">Create an account</a>
+        </p>
+
+        <p className="security-note">
+          Your workspace access is protected.
+        </p>
+      </div>
+    </section>
+  </main>
   )
 }
