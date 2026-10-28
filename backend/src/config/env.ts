@@ -27,7 +27,14 @@ const envSchema = z.object({
     .string()
     .trim()
     .min(1, "MONGODB_URI must be configured"),
+
+  JWT_SECRET: z
+    .string()
+    .min(32, "JWT_SECRET must be at least 32 characters"),
+
 });
+
+
 
 /**
  * Parse process.env once and expose only validated configuration.
