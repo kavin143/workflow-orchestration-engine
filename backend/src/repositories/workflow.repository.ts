@@ -25,7 +25,34 @@ export interface UpdateWorkflowInput {
   status?: WorkflowStatus | undefined;
 }
 
+export interface WorkflowSummary {
+  total: number;
+  draft: number;
+  active: number;
+  archived: number;
+}
+
 export class WorkflowRepository {
+  async countByStatus(tenantId: string): Promise<WorkflowSummary> {
+    const rows = await WorkflowModel.aggregate<{ _id: WorkflowStatus; count: number }>([
+      { $match: { tenantId: new Types.ObjectId(tenantId) } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+
+    const summary: WorkflowSummary = { total: 0, draft: 0, active: 0, archived: 0 };
+
+    for (const row of rows) {
+      summary.total += row.count;
+
+      if (row._id === "DRAFT") summary.draft = row.count;
+      if (row._id === "ACTIVE") summary.active = row.count;
+      if (row._id === "ARCHIVED") summary.archived = row.count;
+    }
+
+    return summary;
+  }
+
+
   async create(input: CreateWorkflowInput): Promise<Workflow> {
     const workflow = await WorkflowModel.create({
       tenantId: new Types.ObjectId(input.tenantId),
@@ -111,6 +138,30 @@ export class WorkflowRepository {
         tenantId: new Types.ObjectId(tenantId),
       },
       { $set: input },
+      {
+        new: true,
+        runValidators: true,
+      },
+    )
+      .lean<Workflow>()
+      .exec();
+  }
+
+  async saveDefinition(
+    tenantId: string,
+    workflowId: string,
+    definition: Workflow["definition"],
+  ): Promise<Workflow | null> {
+    if (!mongoose.isValidObjectId(workflowId)) {
+      return null;
+    }
+
+    return WorkflowModel.findOneAndUpdate(
+      {
+        _id: workflowId,
+        tenantId: new Types.ObjectId(tenantId),
+      },
+      { $set: { definition } },
       {
         new: true,
         runValidators: true,

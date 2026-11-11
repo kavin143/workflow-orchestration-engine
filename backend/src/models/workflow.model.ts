@@ -1,4 +1,5 @@
 import { Schema, model, Types } from "mongoose";
+import type { WorkflowDefinition } from "../engine/types.js";
 
 export const WORKFLOW_STATUSES = [
   "DRAFT",
@@ -8,12 +9,15 @@ export const WORKFLOW_STATUSES = [
 
 export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
 
+const EMPTY_DEFINITION: WorkflowDefinition = { nodes: [], edges: [] };
+
 export interface Workflow {
   tenantId: Types.ObjectId;
   createdBy: Types.ObjectId;
   name: string;
   description: string;
   status: WorkflowStatus;
+  definition: WorkflowDefinition;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +57,14 @@ const workflowSchema = new Schema<Workflow>(
       enum: WORKFLOW_STATUSES,
       default: "DRAFT",
       required: true,
+    },
+
+    // The node/edge graph built in the visual builder. Stored as Mixed
+    // since its shape (per-node-type config) is validated at the
+    // application layer, not by Mongoose.
+    definition: {
+      type: Schema.Types.Mixed,
+      default: () => EMPTY_DEFINITION,
     },
   },
   {

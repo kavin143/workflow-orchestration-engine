@@ -5,6 +5,7 @@ import {
   registerDatabaseListeners,
   disconnectDatabase,
 } from "./config/database.js";
+import { startExecutionWorker } from "./workers/execution.worker.js";
 
 const PORT = env.PORT;
 
@@ -13,6 +14,7 @@ async function startServer(): Promise<void> {
 
   // Validate configuration first, then establish the database connection.
   await connectDatabase();
+  startExecutionWorker();
 
   const server = app.listen(PORT, () => {
     console.info(`HTTP server listening on port ${PORT}.`);

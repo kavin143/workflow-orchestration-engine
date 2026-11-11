@@ -6,12 +6,19 @@ import {
   createWorkflowSchema,
   updateWorkflowSchema,
 } from "../validators/workflow.validator.js";
+import { workflowDefinitionSchema } from "../validators/workflow-definition.validator.js";
 import {
   workflowRepository,
   type UpdateWorkflowInput,
 } from "../repositories/workflow.repository.js";
+import { validateGraph } from "../engine/graph.js";
+import type { WorkflowDefinition } from "../engine/types.js";
 
 export class WorkflowService {
+  async summary(tenantId: string) {
+    return workflowRepository.countByStatus(tenantId);
+  }
+
   async create(
     tenantId: string,
     userId: string,
@@ -104,6 +111,67 @@ export class WorkflowService {
       tenantId,
       workflowId,
       changes,
+    );
+
+    if (!updated) {
+      throw new AppError(404, "Workflow not found", "WORKFLOW_NOT_FOUND");
+    }
+
+    return updated;
+  }
+
+  async validateDefinition(input: unknown): Promise<{
+    valid: boolean;
+    errors: string[];
+  }> {
+    const parsed = workflowDefinitionSchema.safeParse(input);
+
+    if (!parsed.success) {
+      return {
+        valid: false,
+        errors: parsed.error.issues.map((issue) => {
+          const field = issue.path.join(".") || "body";
+          return `${field}: ${issue.message}`;
+        }),
+      };
+    }
+
+    return validateGraph(parsed.data as WorkflowDefinition);
+  }
+
+  async saveDefinition(
+    tenantId: string,
+    workflowId: string,
+    input: unknown,
+  ) {
+    if (!mongoose.isValidObjectId(workflowId)) {
+      throw new AppError(400, "Invalid workflow ID", "INVALID_WORKFLOW_ID");
+    }
+
+    const existing = await workflowRepository.findById(tenantId, workflowId);
+
+    if (!existing) {
+      throw new AppError(404, "Workflow not found", "WORKFLOW_NOT_FOUND");
+    }
+
+    if (existing.status === "ARCHIVED") {
+      throw new AppError(
+        409,
+        "Archived workflows cannot be updated",
+        "WORKFLOW_ARCHIVED",
+      );
+    }
+
+    const { valid, errors } = await this.validateDefinition(input);
+
+    if (!valid) {
+      throw new AppError(400, errors.join("; "), "INVALID_DEFINITION");
+    }
+
+    const updated = await workflowRepository.saveDefinition(
+      tenantId,
+      workflowId,
+      input as WorkflowDefinition,
     );
 
     if (!updated) {
