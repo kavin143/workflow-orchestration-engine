@@ -32,6 +32,10 @@ const envSchema = z.object({
     .string()
     .min(32, "JWT_SECRET must be at least 32 characters"),
 
+  // Used only by the `seed:admin` script, never required by the server.
+  ADMIN_SEED_NAME: z.string().trim().optional(),
+  ADMIN_SEED_EMAIL: z.string().trim().optional(),
+  ADMIN_SEED_PASSWORD: z.string().optional(),
 });
 
 
