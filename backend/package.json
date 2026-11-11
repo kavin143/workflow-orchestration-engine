@@ -10,7 +10,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "seed:admin": "tsx src/scripts/seed-admin.ts"
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
+    "seed:sample": "tsx src/scripts/seed-sample-workflow.ts"
   },
   "dependencies": {
     "argon2": "^0.45.1",

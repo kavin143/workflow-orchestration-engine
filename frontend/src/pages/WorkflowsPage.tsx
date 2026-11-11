@@ -250,27 +250,6 @@ export default function WorkflowsPage() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <header className={styles.topbar}>
-          <Link to="/dashboard" className={styles.brand}>
-            <span className={styles.brandMark}>Z</span>
-            <span>
-              <strong>Zaalima</strong>
-              <small>Workflow Engine</small>
-            </span>
-          </Link>
-
-          <nav className={styles.topLinks} aria-label="Main navigation">
-            <Link to="/dashboard">Dashboard</Link>
-            <span className={styles.activeLink}>Workflows</span>
-            <Link to="/executions">Executions</Link>
-          </nav>
-
-          <span className={styles.environmentBadge}>
-            <span />
-            Workspace
-          </span>
-        </header>
-
         <section className={styles.content}>
           <div className={styles.breadcrumb}>
             <Link to="/dashboard">Dashboard</Link>
@@ -610,6 +589,13 @@ export default function WorkflowsPage() {
                           </td>
                           <td>
                             <div className={styles.rowActions}>
+                              <Link
+                                to={`/workflows/${workflow._id}/builder`}
+                                className={styles.actionButton}
+                                aria-label={`Open builder for ${workflow.name}`}
+                              >
+                                Open Builder
+                              </Link>
                               {workflow.status !== 'ARCHIVED' ? (
                                 <>
                                   <button

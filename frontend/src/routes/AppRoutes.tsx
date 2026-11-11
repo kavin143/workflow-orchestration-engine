@@ -1,11 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
 import AdminProtectedRoute from './AdminProtectedRoute'
+import AppShell from '../components/layout/AppShell'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
 import DashboardPage from '../pages/DashboardPage'
 import WorkflowsPage from '../pages/WorkflowsPage'
+import WorkflowBuilderPage from '../pages/WorkflowBuilderPage'
 import ExecutionsPage from '../pages/ExecutionsPage'
+import ExecutionViewPage from '../pages/ExecutionViewPage'
 import AdminLoginPage from '../pages/admin/AdminLoginPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
 
@@ -17,9 +20,13 @@ export default function AppRoutes() {
       <Route path="/admin/login" element={<AdminLoginPage />} />
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/workflows" element={<WorkflowsPage />} />
-        <Route path="/executions" element={<ExecutionsPage />} />
+        <Route element={<AppShell />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/workflows" element={<WorkflowsPage />} />
+          <Route path="/workflows/:id/builder" element={<WorkflowBuilderPage />} />
+          <Route path="/executions" element={<ExecutionsPage />} />
+          <Route path="/executions/:id" element={<ExecutionViewPage />} />
+        </Route>
       </Route>
 
       <Route element={<AdminProtectedRoute />}>
