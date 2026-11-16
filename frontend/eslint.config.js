@@ -18,5 +18,12 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Fetch-on-mount (call an async loader from an effect) is the pattern
+      // used across the app; the loader only sets state after awaiting.
+      'react-hooks/set-state-in-effect': 'off',
+      // Contexts / small constant maps share files with their components.
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

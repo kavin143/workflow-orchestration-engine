@@ -2,6 +2,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -11,6 +12,7 @@ import {
   getAdminAccessToken,
   saveAdminAccessToken,
 } from './adminTokenStorage'
+import { SESSION_EXPIRED_EVENT } from '../../services/api/apiClient'
 
 type AdminAuthContextValue = {
   token: string | null
@@ -33,6 +35,18 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     clearAdminAccessToken()
     setToken(null)
   }
+
+  useEffect(() => {
+    function onExpired(event: Event) {
+      if ((event as CustomEvent<{ scope: string }>).detail?.scope === 'admin') {
+        clearAdminAccessToken()
+        setToken(null)
+      }
+    }
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, onExpired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired)
+  }, [])
 
   const value = useMemo(
     () => ({

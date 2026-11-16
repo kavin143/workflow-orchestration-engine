@@ -1,7 +1,14 @@
-
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiRequest } from '../services/api/apiClient'
+import { Alert, EmptyState, Icon, Loader, PageHeader, Pager, StatusBadge } from '../components/ui'
+import {
+  formatDateTime,
+  formatDuration,
+  getErrorMessage,
+  type ApiResponse,
+  type Paged,
+} from '../utils/format'
 
 type ExecutionStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED'
 
@@ -11,33 +18,13 @@ type ExecutionListItem = {
   status: ExecutionStatus
   startedAt: string
   finishedAt?: string
+  nodeRuns?: { status: string }[]
 }
-
-type ExecutionListData = {
-  items: ExecutionListItem[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
-
-type ApiResponse<T> = { success: boolean; data: T }
 
 const PAGE_SIZE = 10
 
-const STATUS_BADGE: Record<ExecutionStatus, string> = {
-  PENDING: 'bg-secondary',
-  RUNNING: 'bg-primary',
-  SUCCESS: 'bg-success',
-  FAILED: 'bg-danger',
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Something went wrong.'
-}
-
 export default function ExecutionsPage() {
-  const [executions, setExecutions] = useState<ExecutionListItem[]>([])
+  const [items, setItems] = useState<ExecutionListItem[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -45,110 +32,116 @@ export default function ExecutionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
+  const load = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true)
 
-    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
-    if (statusFilter) params.set('status', statusFilter)
+      const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
+      if (statusFilter) params.set('status', statusFilter)
 
-    try {
-      const response = await apiRequest<ApiResponse<ExecutionListData>>(
-        `executions?${params.toString()}`,
-      )
-      setExecutions(response.data.items)
-      setTotal(response.data.total)
-      setTotalPages(response.data.totalPages)
-    } catch (err) {
-      setError(getErrorMessage(err))
-      setExecutions([])
-    } finally {
-      setLoading(false)
-    }
-  }, [page, statusFilter])
+      try {
+        const response = await apiRequest<ApiResponse<Paged<ExecutionListItem>>>(
+          `executions?${params.toString()}`,
+        )
+        setItems(response.data.items)
+        setTotal(response.data.total)
+        setTotalPages(response.data.totalPages)
+        setError('')
+      } catch (err) {
+        setError(getErrorMessage(err))
+        setItems([])
+      } finally {
+        setLoading(false)
+      }
+    },
+    [page, statusFilter],
+  )
 
   useEffect(() => {
     void load()
+    const timer = setInterval(() => void load(true), 4000)
+    return () => clearInterval(timer)
   }, [load])
 
   return (
-    <div className="container-fluid py-3">
-      <h1>Executions</h1>
+    <div className="page">
+      <PageHeader title="Execution history" subtitle="Every workflow run, newest first. Updates automatically." />
 
-      <select
-        className="form-select mb-3"
-        style={{ maxWidth: 200 }}
-        value={statusFilter}
-        onChange={(event) => {
-          setStatusFilter(event.target.value as '' | ExecutionStatus)
-          setPage(1)
-        }}
-      >
-        <option value="">All statuses</option>
-        <option value="PENDING">Pending</option>
-        <option value="RUNNING">Running</option>
-        <option value="SUCCESS">Success</option>
-        <option value="FAILED">Failed</option>
-      </select>
+      {error && <Alert kind="error">{error}</Alert>}
 
-      {error && <div className="alert alert-danger py-2">{error}</div>}
-      {loading && <p>Loading…</p>}
+      <section className="card">
+        <div className="toolbar">
+          <select
+            className="select"
+            value={statusFilter}
+            aria-label="Filter by status"
+            onChange={(event) => {
+              setStatusFilter(event.target.value as '' | ExecutionStatus)
+              setPage(1)
+            }}
+          >
+            <option value="">All status</option>
+            <option value="PENDING">Pending</option>
+            <option value="RUNNING">Running</option>
+            <option value="SUCCESS">Success</option>
+            <option value="FAILED">Failed</option>
+          </select>
+          <span className="spacer" />
+          <button type="button" className="btn" onClick={() => void load()}>
+            <Icon name="refresh" size={15} /> Refresh
+          </button>
+        </div>
 
-      {!loading && executions.length === 0 && !error && <p>No executions yet.</p>}
-
-      {!loading && executions.length > 0 && (
-        <>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Workflow</th>
-                <th>Status</th>
-                <th>Started</th>
-                <th>Finished</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {executions.map((execution) => (
-                <tr key={execution._id}>
-                  <td>{execution.workflowName}</td>
-                  <td>
-                    <span className={`badge ${STATUS_BADGE[execution.status]}`}>{execution.status}</span>
-                  </td>
-                  <td>{new Date(execution.startedAt).toLocaleString()}</td>
-                  <td>{execution.finishedAt ? new Date(execution.finishedAt).toLocaleString() : '—'}</td>
-                  <td>
-                    <Link to={`/executions/${execution._id}`}>View</Link>
-                  </td>
+        {loading ? (
+          <Loader />
+        ) : items.length === 0 ? (
+          <EmptyState icon="activity" title="No executions yet" text="Run a workflow and its history will appear here." />
+        ) : (
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Run ID</th>
+                  <th>Workflow</th>
+                  <th>Status</th>
+                  <th>Steps</th>
+                  <th>Started</th>
+                  <th>Duration</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item) => {
+                  const done = item.nodeRuns?.filter((run) => run.status === 'SUCCESS').length ?? 0
+                  const all = item.nodeRuns?.length ?? 0
 
-          <div className="d-flex justify-content-between align-items-center">
-            <span>{total} total</span>
-            <div className="d-flex gap-2 align-items-center">
-              <button
-                type="button"
-                className="btn btn-sm btn-light border"
-                disabled={page <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-              >
-                ← Previous
-              </button>
-              <span>Page {page} of {Math.max(totalPages, 1)}</span>
-              <button
-                type="button"
-                className="btn btn-sm btn-light border"
-                disabled={page >= totalPages}
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-              >
-                Next →
-              </button>
-            </div>
+                  return (
+                    <tr key={item._id}>
+                      <td className="mono muted">#{item._id.slice(-6)}</td>
+                      <td className="cell-title">{item.workflowName}</td>
+                      <td><StatusBadge status={item.status} /></td>
+                      <td className="muted">{all ? `${done}/${all}` : '—'}</td>
+                      <td className="muted">{formatDateTime(item.startedAt)}</td>
+                      <td className="muted">{formatDuration(item.startedAt, item.finishedAt)}</td>
+                      <td>
+                        <div className="row-actions">
+                          <Link to={`/executions/${item._id}`} className="btn sm">
+                            <Icon name="eye" size={14} /> View
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-        </>
-      )}
+        )}
+
+        {!loading && items.length > 0 && (
+          <Pager page={page} totalPages={totalPages} total={total} noun="executions" onChange={setPage} />
+        )}
+      </section>
     </div>
   )
 }

@@ -124,6 +124,9 @@ const userSchema = new Schema<User>(
       required: [true, "Tenant ID is required"],
       index: true,
 
+      // Lets the admin panel populate the tenant's name and slug.
+      ref: "Tenant",
+
       // A user's tenant assignment cannot be changed through
       // ordinary Mongoose document updates.
       immutable: true,

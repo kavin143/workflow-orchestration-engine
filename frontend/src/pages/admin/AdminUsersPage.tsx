@@ -1,7 +1,7 @@
-
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { useAdminAuth } from '../../features/admin/AdminAuthContext'
 import { adminApiRequest } from '../../services/api/adminApiClient'
+import { Alert, EmptyState, Icon, Loader, PageHeader, Pager, StatusBadge } from '../../components/ui'
+import { formatDate, getErrorMessage, initials, type ApiResponse, type Paged } from '../../utils/format'
 
 type UserStatus = 'ACTIVE' | 'DISABLED'
 
@@ -12,274 +12,172 @@ type AdminUser = {
   email: string
   status: UserStatus
   createdAt: string
-  tenantId: {
-    _id: string
-    name: string
-    slug: string
-  } | null
-}
-
-type UserListData = {
-  items: AdminUser[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
-
-type ApiResponse<T> = {
-  success: boolean
-  data: T
+  tenantId: { _id: string; name: string; slug: string } | null
 }
 
 const PAGE_SIZE = 10
 
-function formatDate(value: string): string {
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return '—'
-  }
-
-  return new Intl.DateTimeFormat('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date)
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : 'Something went wrong. Please try again.'
-}
-
 export default function AdminUsersPage() {
-  const { logout } = useAdminAuth()
-
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
-
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'' | UserStatus>('')
-
   const [loading, setLoading] = useState(true)
-  const [pageError, setPageError] = useState('')
+  const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [busyId, setBusyId] = useState<string | null>(null)
 
-  const [busyUserId, setBusyUserId] = useState<string | null>(null)
-
-  const loadUsers = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true)
-    setPageError('')
-
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(PAGE_SIZE),
-    })
-
+    const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
     if (search) params.set('search', search)
     if (statusFilter) params.set('status', statusFilter)
 
     try {
-      const response = await adminApiRequest<ApiResponse<UserListData>>(
-        `admin/users?${params.toString()}`,
-      )
-
+      const response = await adminApiRequest<ApiResponse<Paged<AdminUser>>>(`admin/users?${params.toString()}`)
       setUsers(response.data.items)
       setTotal(response.data.total)
-      setPage(response.data.page)
       setTotalPages(response.data.totalPages)
-    } catch (error) {
-      setPageError(getErrorMessage(error))
+      setError('')
+    } catch (err) {
+      setError(getErrorMessage(err))
       setUsers([])
-      setTotal(0)
-      setTotalPages(0)
     } finally {
       setLoading(false)
     }
   }, [page, search, statusFilter])
 
   useEffect(() => {
-    void loadUsers()
-  }, [loadUsers])
+    void load()
+  }, [load])
 
-  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setPage(1)
-    setSearch(searchInput.trim())
-    setNotice('')
-  }
+  async function toggleStatus(user: AdminUser) {
+    const next: UserStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE'
+    const fullName = `${user.firstName} ${user.lastName}`
 
-  async function handleToggleStatus(user: AdminUser) {
-    const nextStatus: UserStatus =
-      user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE'
+    if (!window.confirm(next === 'DISABLED' ? `Disable "${fullName}"? They will no longer be able to sign in.` : `Enable "${fullName}"?`)) return
 
-    const confirmed = window.confirm(
-      nextStatus === 'DISABLED'
-        ? `Disable "${user.firstName} ${user.lastName}"? They will no longer be able to sign in.`
-        : `Enable "${user.firstName} ${user.lastName}"?`,
-    )
-
-    if (!confirmed) return
-
-    setBusyUserId(user._id)
-    setPageError('')
+    setBusyId(user._id)
     setNotice('')
 
     try {
       await adminApiRequest(`admin/users/${user._id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: nextStatus }),
+        body: JSON.stringify({ status: next }),
       })
-
-      setNotice(`"${user.firstName} ${user.lastName}" is now ${nextStatus.toLowerCase()}.`)
-      await loadUsers()
-    } catch (error) {
-      setPageError(getErrorMessage(error))
+      setNotice(`"${fullName}" is now ${next.toLowerCase()}.`)
+      await load()
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
-      setBusyUserId(null)
+      setBusyId(null)
     }
   }
 
-  async function handleDelete(user: AdminUser) {
-    const confirmed = window.confirm(
-      `Permanently delete "${user.firstName} ${user.lastName}"? This cannot be undone.`,
-    )
+  async function remove(user: AdminUser) {
+    const fullName = `${user.firstName} ${user.lastName}`
+    if (!window.confirm(`Permanently delete "${fullName}"? This cannot be undone.`)) return
 
-    if (!confirmed) return
-
-    setBusyUserId(user._id)
-    setPageError('')
+    setBusyId(user._id)
     setNotice('')
 
     try {
       await adminApiRequest(`admin/users/${user._id}`, { method: 'DELETE' })
-
-      setNotice(`"${user.firstName} ${user.lastName}" was deleted.`)
-
-      if (users.length === 1 && page > 1) {
-        setPage((current) => current - 1)
-      } else {
-        await loadUsers()
-      }
-    } catch (error) {
-      setPageError(getErrorMessage(error))
+      setNotice(`"${fullName}" was deleted.`)
+      if (users.length === 1 && page > 1) setPage((current) => current - 1)
+      else await load()
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
-      setBusyUserId(null)
+      setBusyId(null)
     }
   }
 
   return (
-    <main className="page">
-      <section className="panel">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h1>Admin Panel — Users</h1>
-          <button type="button" className="btn btn-outline-secondary" onClick={logout}>
-            Log out
-          </button>
-        </div>
+    <div className="page">
+      <PageHeader title="Users" subtitle="Accounts across every tenant. Changes take effect immediately." />
 
-        <p>Manage user accounts across every tenant workspace.</p>
+      {notice && <Alert kind="success" onClose={() => setNotice('')}>{notice}</Alert>}
+      {error && <Alert kind="error" onClose={() => setError('')}>{error}</Alert>}
 
-        <form className="d-flex gap-2 mb-3" onSubmit={handleSearchSubmit}>
-          <input
-            className="form-control"
-            aria-label="Search users"
-            placeholder="Search by name or email…"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-          />
-
+      <section className="card">
+        <form
+          className="toolbar"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault()
+            setPage(1)
+            setSearch(searchInput.trim())
+          }}
+        >
+          <div className="search">
+            <Icon name="search" size={16} />
+            <input placeholder="Search by name or email…" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} aria-label="Search users" />
+          </div>
           <select
-            className="form-select"
-            aria-label="Filter by status"
-            style={{ maxWidth: 160 }}
+            className="select"
             value={statusFilter}
-            onChange={(event) => {
-              setStatusFilter(event.target.value as '' | UserStatus)
-              setPage(1)
-            }}
+            aria-label="Filter by status"
+            onChange={(e) => { setStatusFilter(e.target.value as '' | UserStatus); setPage(1) }}
           >
-            <option value="">All statuses</option>
+            <option value="">All status</option>
             <option value="ACTIVE">Active</option>
             <option value="DISABLED">Disabled</option>
           </select>
-
-          <button type="submit" className="btn btn-light border">
-            Search
-          </button>
+          <button type="submit" className="btn">Search</button>
         </form>
 
-        {notice && (
-          <div className="alert alert-success py-2" role="status">
-            {notice}
-          </div>
-        )}
-
-        {pageError && (
-          <div className="alert alert-danger py-2" role="alert">
-            {pageError}
-          </div>
-        )}
-
-        {loading && (
-          <div role="status">
-            <span className="spinner-border spinner-border-sm text-primary" /> Loading users…
-          </div>
-        )}
-
-        {!loading && users.length === 0 && !pageError && (
-          <p>No users found.</p>
-        )}
-
-        {!loading && users.length > 0 && (
-          <>
-            <table className="table align-middle">
+        {loading ? (
+          <Loader />
+        ) : users.length === 0 ? (
+          <EmptyState icon="users" title="No users found" text="Try a different search or filter." />
+        ) : (
+          <div className="table-wrap">
+            <table className="table">
               <thead>
                 <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col">Tenant</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Joined</th>
-                  <th scope="col">Actions</th>
+                  <th>User</th>
+                  <th>Tenant</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
                   <tr key={user._id}>
-                    <td>{user.firstName} {user.lastName}</td>
-                    <td>{user.email}</td>
-                    <td>{user.tenantId?.name ?? '—'}</td>
                     <td>
-                      <span
-                        className={`badge ${user.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}`}
-                      >
-                        {user.status}
-                      </span>
+                      <div className="row">
+                        <span className="avatar">{initials(user.firstName, user.lastName)}</span>
+                        <div>
+                          <div className="cell-title">{user.firstName} {user.lastName}</div>
+                          <div className="small muted">{user.email}</div>
+                        </div>
+                      </div>
                     </td>
-                    <td>{formatDate(user.createdAt)}</td>
+                    <td>{user.tenantId?.name ?? <span className="muted">—</span>}</td>
+                    <td><StatusBadge status={user.status} /></td>
+                    <td className="muted">{formatDate(user.createdAt)}</td>
                     <td>
-                      <div className="d-flex gap-2">
+                      <div className="row-actions">
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline-primary"
-                          disabled={busyUserId === user._id}
-                          onClick={() => void handleToggleStatus(user)}
+                          className={`btn sm ${user.status === 'ACTIVE' ? '' : 'success'}`}
+                          disabled={busyId === user._id}
+                          onClick={() => void toggleStatus(user)}
                         >
                           {user.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                         </button>
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline-danger"
-                          disabled={busyUserId === user._id}
-                          onClick={() => void handleDelete(user)}
+                          className="btn sm icon danger"
+                          disabled={busyId === user._id}
+                          onClick={() => void remove(user)}
+                          aria-label={`Delete ${user.firstName} ${user.lastName}`}
                         >
-                          Delete
+                          <Icon name="trash" size={14} />
                         </button>
                       </div>
                     </td>
@@ -287,35 +185,11 @@ export default function AdminUsersPage() {
                 ))}
               </tbody>
             </table>
-
-            <footer className="d-flex justify-content-between align-items-center">
-              <span>
-                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min((page - 1) * PAGE_SIZE + users.length, total)} of {total}
-              </span>
-
-              <div className="d-flex gap-2 align-items-center">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-light border"
-                  disabled={page <= 1 || loading}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                >
-                  ← Previous
-                </button>
-                <span>Page {page} of {Math.max(totalPages, 1)}</span>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-light border"
-                  disabled={page >= totalPages || loading || totalPages === 0}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                >
-                  Next →
-                </button>
-              </div>
-            </footer>
-          </>
+          </div>
         )}
+
+        {!loading && users.length > 0 && <Pager page={page} totalPages={totalPages} total={total} noun="users" onChange={setPage} />}
       </section>
-    </main>
+    </div>
   )
 }

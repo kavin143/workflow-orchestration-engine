@@ -32,49 +32,74 @@ type WorkflowWithId = Workflow & { _id: Types.ObjectId };
 const DEMO_TENANT_SLUG = "demo-workspace";
 const DEMO_EMAIL = "demo@example.com";
 const DEMO_PASSWORD = "DemoPass123!";
-const SAMPLE_WORKFLOW_NAME = "Customer Onboarding (Sample)";
+const SAMPLE_WORKFLOW_NAME = "Live Weather Alert";
 
+/**
+ * A real, working workflow that needs no API keys:
+ *   1. geocode a city name (Open-Meteo geocoding API)
+ *   2. fetch the live temperature for those coordinates (Open-Meteo forecast API)
+ *   3. POST a summary to an echo service (httpbin) using values from steps 1-2
+ *   4. branch on the live temperature: heat alert vs. normal
+ */
 const SAMPLE_DEFINITION: WorkflowDefinition = {
   nodes: [
-    { id: "start", type: "START", name: "start", position: { x: 40, y: 160 }, config: {} },
+    { id: "start", type: "START", name: "start", position: { x: 40, y: 200 }, config: {} },
     {
-      id: "createCustomer",
+      id: "geocodeCity",
       type: "API_REQUEST",
-      name: "createCustomer",
-      position: { x: 260, y: 160 },
-      config: { method: "GET", url: "https://httpbin.org/get" },
+      name: "geocodeCity",
+      position: { x: 270, y: 200 },
+      config: {
+        method: "GET",
+        url: "https://geocoding-api.open-meteo.com/v1/search?name=Chennai&count=1",
+      },
     },
     {
-      id: "sendWelcomeEmail",
+      id: "fetchWeather",
       type: "API_REQUEST",
-      name: "sendWelcomeEmail",
-      position: { x: 480, y: 160 },
-      config: { method: "GET", url: "https://httpbin.org/get" },
+      name: "fetchWeather",
+      position: { x: 500, y: 200 },
+      config: {
+        method: "GET",
+        url: "https://api.open-meteo.com/v1/forecast?latitude={{geocodeCity.body.results.0.latitude}}&longitude={{geocodeCity.body.results.0.longitude}}&current=temperature_2m,relative_humidity_2m,wind_speed_10m",
+      },
     },
     {
-      id: "checkVerification",
+      id: "sendReport",
+      type: "API_REQUEST",
+      name: "sendReport",
+      position: { x: 730, y: 200 },
+      config: {
+        method: "POST",
+        url: "https://httpbin.org/post",
+        body: '{"city":"{{geocodeCity.body.results.0.name}}","temperatureC":{{fetchWeather.body.current.temperature_2m}},"humidity":{{fetchWeather.body.current.relative_humidity_2m}}}',
+      },
+    },
+    {
+      id: "checkHeat",
       type: "CONDITION",
-      name: "checkVerification",
-      position: { x: 700, y: 160 },
-      config: { expression: "{{createCustomer.status}} == 200" },
+      name: "checkHeat",
+      position: { x: 960, y: 200 },
+      config: { expression: "{{fetchWeather.body.current.temperature_2m}} >= 30" },
     },
-    { id: "completed", type: "END", name: "Completed", position: { x: 940, y: 60 }, config: {} },
+    { id: "heatAlert", type: "END", name: "Heat alert raised", position: { x: 1230, y: 70 }, config: {} },
     {
-      id: "waitBeforeRetry",
+      id: "coolDown",
       type: "DELAY",
-      name: "Wait before retry",
-      position: { x: 940, y: 260 },
+      name: "coolDown",
+      position: { x: 1230, y: 330 },
       config: { ms: 2000 },
     },
-    { id: "needsFollowUp", type: "END", name: "Needs follow-up", position: { x: 1160, y: 260 }, config: {} },
+    { id: "allClear", type: "END", name: "Weather normal", position: { x: 1460, y: 330 }, config: {} },
   ],
   edges: [
-    { id: "e1", source: "start", target: "createCustomer" },
-    { id: "e2", source: "createCustomer", target: "sendWelcomeEmail" },
-    { id: "e3", source: "sendWelcomeEmail", target: "checkVerification" },
-    { id: "e4", source: "checkVerification", target: "completed", sourceHandle: "yes" },
-    { id: "e5", source: "checkVerification", target: "waitBeforeRetry", sourceHandle: "no" },
-    { id: "e6", source: "waitBeforeRetry", target: "needsFollowUp" },
+    { id: "e1", source: "start", target: "geocodeCity" },
+    { id: "e2", source: "geocodeCity", target: "fetchWeather" },
+    { id: "e3", source: "fetchWeather", target: "sendReport" },
+    { id: "e4", source: "sendReport", target: "checkHeat" },
+    { id: "e5", source: "checkHeat", target: "heatAlert", sourceHandle: "yes" },
+    { id: "e6", source: "checkHeat", target: "coolDown", sourceHandle: "no" },
+    { id: "e7", source: "coolDown", target: "allClear" },
   ],
 };
 
@@ -167,7 +192,7 @@ async function seedSampleWorkflow(): Promise<void> {
         createdBy: userId,
         name: SAMPLE_WORKFLOW_NAME,
         description:
-          "A ready-made example: fetch a customer, send a welcome email, check verification, then branch to Completed or a delayed follow-up.",
+          "Real workflow, no API keys: geocode a city, fetch its live temperature from Open-Meteo, post a report, then branch on a heat threshold.",
       });
 
       workflowId = (workflow as WorkflowWithId)._id.toString();
