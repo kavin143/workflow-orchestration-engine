@@ -1,15 +1,12 @@
-
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '../../features/admin/AdminAuthContext'
 import { apiRequest } from '../../services/api/apiClient'
+import AuthLayout from '../../components/layout/AuthLayout'
+import { Alert, Icon, PasswordInput } from '../../components/ui'
+import { getErrorMessage } from '../../utils/format'
 
-type AdminLoginResponse = {
-  success?: boolean
-  data?: {
-    accessToken?: string
-  }
-}
+type AdminLoginResponse = { data?: { accessToken?: string } }
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -38,46 +35,64 @@ export default function AdminLoginPage() {
       }
 
       login(token)
-      navigate('/admin/users', { replace: true })
+      navigate('/admin', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.')
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="page">
-      <form className="panel login-panel" onSubmit={handleSubmit}>
-        <h1>Admin Panel</h1>
-        <p>Sign in with your platform administrator account.</p>
+    <AuthLayout
+      admin
+      title="Platform control centre."
+      tagline="Monitor every tenant, user and execution across the platform, and act on problems instantly."
+      points={[
+        { icon: 'activity', text: 'Live platform-wide execution monitoring' },
+        { icon: 'building', text: 'Tenant and user management' },
+        { icon: 'server', text: 'Worker queue health at a glance' },
+      ]}
+    >
+      <h2>Admin sign-in</h2>
+      <p className="sub">Restricted to platform administrators.</p>
 
-        <label htmlFor="admin-email">Email</label>
-        <input
-          id="admin-email"
-          type="email"
-          autoComplete="username"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
+      {error && <Alert kind="error">{error}</Alert>}
 
-        <label htmlFor="admin-password">Password</label>
-        <input
-          id="admin-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
+      <form onSubmit={handleSubmit}>
+        <div className="field">
+          <label htmlFor="admin-email">Email</label>
+          <input
+            id="admin-email"
+            className="input"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+        </div>
 
-        {error && <p role="alert" className="error">{error}</p>}
+        <div className="field">
+          <label htmlFor="admin-password">Password</label>
+          <PasswordInput
+            id="admin-password"
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+          />
+        </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Signing in...' : 'Sign in'}
+        <button className="btn primary lg block" type="submit" disabled={loading}>
+          {loading ? <span className="spinner light" /> : null}
+          {loading ? 'Signing in…' : 'Sign in'}
+          {!loading && <Icon name="chevronRight" size={18} />}
         </button>
       </form>
-    </main>
+
+      <p className="auth-foot small">
+        <Link to="/login">← Back to workspace sign-in</Link>
+      </p>
+    </AuthLayout>
   )
 }

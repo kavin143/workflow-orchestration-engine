@@ -29,7 +29,7 @@ A multi-tenant workflow automation platform:
 | Backend  | Node.js, Express 5, TypeScript, MongoDB + Mongoose |
 | Auth     | JWT (`jose`), Argon2id password hashing (`argon2`) |
 | Validation | Zod |
-| Frontend | React 19, Vite, TypeScript, React Router 7, Bootstrap 5 |
+| Frontend | React 19, Vite, TypeScript, React Router 7, custom CSS design system (`src/index.css`) |
 | Workflow builder canvas | `@xyflow/react` (React Flow) |
 | Job queue | A small Mongo-backed queue (`models/job.model.ts`) — no Redis/external broker; a single in-process worker polls it |
 
@@ -241,6 +241,10 @@ yet): Transform, Webhook, Custom Script.
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | POST | `/admin/auth/login` | none | Admin log in, returns JWT |
+| GET | `/admin/overview` | admin JWT | Platform stats: tenants/users/workflows, execution success rate, queue depth, 7-day chart, top tenants, recent failures |
+| GET | `/admin/tenants` | admin JWT | Tenants with user/workflow/execution counts (`?search=&status=&page=&limit=`) |
+| PATCH | `/admin/tenants/:id/status` | admin JWT | Enable or disable a whole tenant |
+| GET | `/admin/executions` | admin JWT | Executions across every tenant (`?search=&status=&page=&limit=`) |
 | GET | `/admin/users` | admin JWT | List users across all tenants (`?search=&status=&page=&limit=`) |
 | GET | `/admin/users/:id` | admin JWT | Get a single user |
 | PATCH | `/admin/users/:id/status` | admin JWT | Set status to `ACTIVE` or `DISABLED` |
@@ -275,10 +279,30 @@ All responses follow `{ success: boolean, data?: ..., message?: string, error?: 
   provider (AWS SES etc.) for no concrete requirement yet, which also
   conflicts with the "local-only, no cloud" scope of this phase
 
-## 10. UI note
+## 10. UI and the live demo workflow
 
-The visual design (styling, layout, branding) for tenant-facing pages is
-owned by a teammate and intentionally left as-is here. The new admin panel
-pages were built with the same plain/basic look as the current
-`LoginPage`/`DashboardPage` (not the more polished `WorkflowsPage`) on
-purpose, so they're easy to restyle later without fighting existing CSS.
+The whole UI uses one design system (`frontend/src/index.css`, shared pieces in
+`components/ui.tsx`, charts in `components/charts.tsx`). Tenant pages live in
+`AppShell`, the admin panel in `AdminShell`; the workflow builder is full-screen.
+
+- **Builder**: drag nodes from the palette, Condition nodes expose green *yes* / red
+  *no* outputs, per-node settings panel (method, URL, headers, body, expression,
+  delay), minimap, Ctrl+S save, unsaved-changes guard, client-side template checks.
+- **Execution view**: the workflow graph is drawn live; each node turns
+  running / success / retrying / dead-letter as the worker progresses, with per-step
+  output JSON, attempts, and colour-coded logs.
+- **Admin panel** (`/admin`): Overview (live stats, chart, top tenants, recent
+  failures, worker queue), Tenants (enable/disable), Users, and cross-tenant
+  Executions with dead-letter markers.
+- **Live Weather Alert** (Workflows page -> *Create & run*, or `npm run seed:sample`):
+  a real workflow that needs **no API keys**. Geocodes a city (Open-Meteo), fetches its
+  live temperature, POSTs a report (httpbin), then branches: heat alert vs. all clear.
+
+## 11. Production notes
+
+- `CORS_ORIGIN` (comma-separated) restricts browser origins; rate limiting is on all
+  `/api/v1` routes with a stricter limit on login/register endpoints.
+- A 401 from the API signs the user out automatically (expired token).
+- Build: `cd frontend && npm run build` (serve `dist/` from any static host / reverse
+  proxy) and `cd backend && npm run build && npm start`.
+- Set a strong `JWT_SECRET` (32+ chars) and a replica-set `MONGODB_URI`.

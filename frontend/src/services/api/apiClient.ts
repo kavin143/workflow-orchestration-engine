@@ -2,6 +2,9 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5000/api/v1/'
 
 import { getAccessToken } from '../../features/auth/tokenStorage'
+import { getAdminAccessToken } from '../../features/admin/adminTokenStorage'
+
+export const SESSION_EXPIRED_EVENT = 'session-expired'
 
 type ApiOptions = RequestInit & {
   token?: string | null
@@ -35,6 +38,12 @@ export async function apiRequest<T>(
   })
 
   const data: unknown = await response.json().catch(() => null)
+
+  if (response.status === 401 && accessToken) {
+    // Token expired or revoked: tell the matching auth provider to sign out.
+    const scope = accessToken === getAdminAccessToken() ? 'admin' : 'tenant'
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { scope } }))
+  }
 
   if (!response.ok) {
     const message =

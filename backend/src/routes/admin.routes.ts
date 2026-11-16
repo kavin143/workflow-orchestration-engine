@@ -13,6 +13,13 @@ import {
   updateAdminUserStatus,
 } from "../controllers/admin-user.controller.js";
 
+import {
+  adminExecutionsController,
+  adminOverviewController,
+  adminTenantsController,
+  adminTenantStatusController,
+} from "../controllers/admin-stats.controller.js";
+
 const router = Router();
 
 /**
@@ -28,6 +35,16 @@ router.post(
 
 // Every route below requires a valid admin access token.
 router.use(requireAdminAuth);
+
+// Platform-wide statistics for the admin dashboard.
+router.get("/overview", adminOverviewController);
+
+// Tenants (workspaces) with usage counts; enable/disable a tenant.
+router.get("/tenants", adminTenantsController);
+router.patch("/tenants/:id/status", adminTenantStatusController);
+
+// Executions across every tenant.
+router.get("/executions", adminExecutionsController);
 
 // List users across every tenant, with search, filters, and pagination.
 router.get("/users", listAdminUsers);
